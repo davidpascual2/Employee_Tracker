@@ -13,7 +13,7 @@ const connection = mysql.createConnection(
     {
     host: 'localhost',
     user: process.env.DB_USER,
-    password: process.env.DB_PW, //?????????
+    password: process.env.DB_PW, 
     database: 'management_db'
     },
     console.log(`connected to the management_db database`)
@@ -148,7 +148,7 @@ const addEmployee = () => {
                     message: "Who is the new employee's manager?",
                     choices: selectManager()
                 },
-            ]).then(function(answer) {
+            ]).then( (answer) => {
                 connection.query(
                     'INSERT INTO employees SET ?',
                     {
@@ -156,6 +156,8 @@ const addEmployee = () => {
                         last_name: answer.last_name,
                         role_id: answer.role_id,
                         manager_id: answer.manager_id,
+                        
+                        
                         
                     },
                     (err) => {
@@ -171,7 +173,7 @@ const addEmployee = () => {
 
 //add a role in database
 function addRole() {
-    connection.query('SELECT role.title AS Title, role.salary AS Salary FROM roles', (err, response) => { //results? role/s?
+    connection.query('SELECT * FROM roles', (err, response) => { //results? role/s?
         // if(err) throw err;
         inquirer
             .prompt([
@@ -182,7 +184,7 @@ function addRole() {
 
                 },
                 {
-                    type: 'input',
+                    type: 'number',
                     name: 'Salary',
                     message: 'what is the salary of new role?',
 
@@ -206,7 +208,7 @@ function addRole() {
                     if(err) {
                         console.log(err)
                     };
-                    console.log('your department was added!');
+                    console.log('your role was added!');
                     menu();
                     })
             })
@@ -228,7 +230,8 @@ function addDepartment() {
             ])
     })
 };
-//============ARRAYS============//
+//=================ARRAYS=================//
+
 let deptArray = []
 const selectDept = () => {
     connection.query(`SELECT * FROM department`, (err, response) => {
