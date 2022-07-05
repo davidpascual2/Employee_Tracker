@@ -1,31 +1,32 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
-const consoleTable = require('console.table');
-// const Connection = require('mysql2/typings/mysql/lib/Connection');
+const consoleTable = require('console.table')
+require('dotenv').config()
+
+// const connection = require('mysql2/typings/mysql/lib/Connection');
 const res = require('express/lib/response');
 
 const database = []
 
 //connect to database
-const Connection = mysql.createConnection( 
+const connection = mysql.createConnection( 
     {
     host: 'localhost',
-    user: 'root',
-    password: 'Dave52416', //?????????
+    user: process.env.DB_USER,
+    password: process.env.DB_PW, //?????????
     database: 'management_db'
     },
-    console.log(`connected to the books_db database`)
+    console.log(`connected to the management_db database`)
 )
 
 //connect to sql server and sql database
-Connection.connect(function(err) {
-    if(err) throw err;
-    menu();
-})
-
-//import classes?
+// connection.connect(function(err) {
+//     if(err) throw err;
+//     menu();
+// })
 
 
+//inquirer
 function menu() {
     inquirer
         .prompt({
@@ -44,7 +45,7 @@ function menu() {
         ]
     }).then(function (answer) {
         switch (answer.menu) {
-            case 'View all employees':
+            case 'View all Employees':
                 viewEmployees();
                 break;
             case 'Add Employee':
@@ -78,19 +79,28 @@ function menu() {
 }
 
 //view all employees in database
-function viewEmployees() {
-    let query = 'SELECT * FROM employee';
-    Connection.query(query, function (err, data) { //results?
-        if(err) throw err;
-        console.log(data);
+const viewEmployees = () => {
+    connection.query(`SELECT * FROM Employees`, (err, data) => {
+        if (err) {
+            console.log(err);
+        }
+        console.table(data);
         menu();
     })
 };
+// function viewEmployees() {
+//     let query = 'SELECT * FROM employee';
+//     connection.query(query, function (err, data) { //results?
+//         if(err) throw err;
+//         console.log(data);
+//         menu();
+//     })
+// };
 
 //view all roles in database
 function viewRoles() {
     let query = 'SELECT * FROM Roles'; //departments????
-    Connection.query(query, function (err, data) {
+    connection.query(query, function (err, data) {
         if(err) throw err; //results?
         console.log(data);
         menu();
@@ -100,22 +110,45 @@ function viewRoles() {
 //view all departments in database
 function viewDepartments() {
     let query = 'SELECT * FROM department'; //????
-    Connection.query(query, function (err, data) {
+    connection.query(query, function (err, data) {
         if(err) throw err; //results?
         console.log(data);
         menu();
     })
 };
 
-//add an employee to database
-function addEmployee() {
-    console.log("inside addemp")
-    Connection.query('SELECT * FROM roles', function (err, data) { //results? role/s?
+//==============ROLE QUERIES FOR ADD EMP PROMPT===================//
+var roleArray = [];
+const selectRole = () => {
+    connection.query(`SELECT * FROM roles`, (err, response) => {
         if(err) throw err;
-        let role_id = [];
-            for (let i = 0; i < data.length; i++) {
-                role_id.push(data[i].id)
-            }
+        for (let i=0; i < response.length; i++) {
+            roleArray.push(response[i].title)
+        }
+    })
+    return roleArray;
+}
+//==============MANAGER NAME FOR ADD EMP PROMPT===================//
+var managerArray = [];
+const selectManager = () => {
+    connection.query(`SELECT * FROM employees WHERE manager_id IS NULL`, (err, response) => {
+        if (err) throw err;
+        for(let i=0; i < response.length; i++) {
+            managerArray.push(response[i].first_name)
+        }
+    })
+    return managerArray;
+}
+
+//===================add an employee to database=====================//
+
+const addEmployee = () => {
+    // connection.query('SELECT * FROM roles', (err, response) => { //results? role/s?
+    //     if(err) throw err;
+    //     let role_id = [];
+    //         for (let i = 0; i < response.length; i++) {
+    //             role_id.push(response[i].title)
+    //         }
         
         inquirer
             .prompt([
@@ -135,54 +168,37 @@ function addEmployee() {
                     type: 'list',
                     name: 'empRole',
                     message: "what is the new employee's Role?",
-                    choices: role_id
-
-                        //map method
-                        // 'sales lead',
-                        // 'sales person',
-                        // 'lead engineer',
-                        // 'software engineer',
-                        // 'account manager',
-                        // 'accountant',
-                        // 'legal team lead',
-                        // 'lawyer',
-                    
-
+                    choices: selectRole()
                 },
                 {
-                    type: 'input',
+                    type: 'list',
                     name: 'empManager',
-                    message: "What is the new employee's manager ID?",
+                    message: "Who is the new employee's manager?",
+                    choices: selectManager()
                 },
-                {
-                    type: 'input',
-                    name: 'menu',
-                    message: 'back to menu',
-
-                }
             ]).then(function(answer) {
-                // Connection.query(
-                //     'INSERT INTO employee SET?',
-                //     {
-                //         first_name: answer.first_name,
-                //         last_name: answer.last_name,
-                //         manager_id: answer.manager_id,
-                //         role_id: answer.role_id,
-                //     },
-                //     function (err) {
-                //         if (err) throw err;
-                //         console.log('Employee added!');
-                //         menu();
-                //     })
-            }).catch(function(err) {
-                console.log(err);
+                connection.query(
+                    'INSERT INTO employee SET ?',
+                    {
+                        first_name: answer.first_name,
+                        last_name: answer.last_name,
+                        manager_id: answer.manager_id,
+                        role_id: answer.role_id,
+                    },
+                    (err) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                        console.log('Employee added!');
+                        menu();
+                    })
             })
     })
 };
 
 //add a role in database
 function addRole() {
-    Connection.query('SELECT * FROM role', function (err, data) { //results? role/s?
+    connection.query('SELECT * FROM role', function (err, data) { //results? role/s?
         if(err) throw err;
         inquirer
             .prompt([
@@ -210,7 +226,7 @@ function addRole() {
                     ]
                 } 
             ]).then(function(answer) {
-                Connection.query(
+                connection.query(
                     'INSERT INTO department SET?',
                     {
                         first_name: answer.first_name,
@@ -219,7 +235,7 @@ function addRole() {
                         role_id: answer.role_id
                     });
                     var query = 'SELECT * FROM department';
-                    Connection.query(query, function(err, res){
+                    connection.query(query, function(err, res){
                     if(err) throw err;
                     console.log('your department was added!');
                     menu();
@@ -230,7 +246,7 @@ function addRole() {
 
 //add a department
 function addDepartment() {
-    Connection.query('SELECT * FROM role', function (err, data) { //results? role/s?
+    connection.query('INSERT INTO departments (name) VALUES', function (err, data) { //results? role/s?
         if(err) throw err;
         inquirer
             .prompt([
@@ -244,6 +260,7 @@ function addDepartment() {
     })
 };
 
+menu();
 //exit app
 
 ///////////////////////////////
