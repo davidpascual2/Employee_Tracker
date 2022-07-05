@@ -78,7 +78,7 @@ function menu() {
     })
 }
 
-//view all employees in database
+//=====view all employees in database=====//
 const viewEmployees = () => {
     connection.query(`SELECT * FROM Employees`, (err, data) => {
         if (err) {
@@ -88,26 +88,19 @@ const viewEmployees = () => {
         menu();
     })
 };
-// function viewEmployees() {
-//     let query = 'SELECT * FROM employee';
-//     connection.query(query, function (err, data) { //results?
-//         if(err) throw err;
-//         console.log(data);
-//         menu();
-//     })
-// };
 
-//view all roles in database
+//=====view all roles in database=====//
 function viewRoles() {
     let query = 'SELECT * FROM Roles'; //departments????
-    connection.query(query, function (err, data) {
-        if(err) throw err; //results?
-        console.log(data);
+    connection.query(query, (err, data) => {
+        if(err) {
+            console.log(err);
+        }; //results?
         menu();
     })
 };
 
-//view all departments in database
+//=====view all departments in database=====//
 function viewDepartments() {
     let query = 'SELECT * FROM department'; //????
     connection.query(query, function (err, data) {
@@ -117,38 +110,17 @@ function viewDepartments() {
     })
 };
 
-//==============ROLE QUERIES FOR ADD EMP PROMPT===================//
-var roleArray = [];
-const selectRole = () => {
-    connection.query(`SELECT * FROM roles`, (err, response) => {
-        if(err) throw err;
-        for (let i=0; i < response.length; i++) {
-            roleArray.push(response[i].title)
-        }
-    })
-    return roleArray;
-}
-//==============MANAGER NAME FOR ADD EMP PROMPT===================//
-var managerArray = [];
-const selectManager = () => {
-    connection.query(`SELECT * FROM employees WHERE manager_id IS NULL`, (err, response) => {
-        if (err) throw err;
-        for(let i=0; i < response.length; i++) {
-            managerArray.push(response[i].first_name)
-        }
-    })
-    return managerArray;
-}
 
-//===================add an employee to database=====================//
 
+//==============================================================//
+//add an employee to database
 const addEmployee = () => {
-    // connection.query('SELECT * FROM roles', (err, response) => { //results? role/s?
-    //     if(err) throw err;
-    //     let role_id = [];
-    //         for (let i = 0; i < response.length; i++) {
-    //             role_id.push(response[i].title)
-    //         }
+    connection.query('SELECT * FROM roles', (err, response) => { //results? role/s?
+        // if(err) throw err;
+        // let role_id = [];
+        //     for (let i = 0; i < response.length; i++) {
+        //         role_id.push(response[i].title)
+        //     }
         
         inquirer
             .prompt([
@@ -178,12 +150,13 @@ const addEmployee = () => {
                 },
             ]).then(function(answer) {
                 connection.query(
-                    'INSERT INTO employee SET ?',
+                    'INSERT INTO employees SET ?',
                     {
                         first_name: answer.first_name,
                         last_name: answer.last_name,
-                        manager_id: answer.manager_id,
                         role_id: answer.role_id,
+                        manager_id: answer.manager_id,
+                        
                     },
                     (err) => {
                         if (err) {
@@ -198,45 +171,41 @@ const addEmployee = () => {
 
 //add a role in database
 function addRole() {
-    connection.query('SELECT * FROM role', function (err, data) { //results? role/s?
-        if(err) throw err;
+    connection.query('SELECT role.title AS Title, role.salary AS Salary FROM roles', (err, response) => { //results? role/s?
+        // if(err) throw err;
         inquirer
             .prompt([
                 {
                     type: 'input',
-                    name: 'role_name',
+                    name: 'Title',
                     message: 'what is the name of new role?',
 
                 },
                 {
                     type: 'input',
-                    name: 'role_salary',
+                    name: 'Salary',
                     message: 'what is the salary of new role?',
 
                 },
                 {
                     type: 'list',
-                    name: 'role_dep',
+                    name: 'department_id',
                     message: "What department does this role belong to?",
-                    choices: [
-                        'Engineering',
-                        'Finance',
-                        'Legal',
-                        'Sales',
-                    ]
-                } 
-            ]).then(function(answer) {
+                    choices: selectDept()
+                }, 
+            ]).then( (answer) => {
                 connection.query(
-                    'INSERT INTO department SET?',
+                    'INSERT INTO roles SET?',
                     {
-                        first_name: answer.first_name,
-                        last_name: answer.last_name,
-                        manager_id: answer.manager_id,
-                        role_id: answer.role_id
+                        title: answer.Title,
+                        salary: answer.Salary,
+                        department_id: answer.department_id,
                     });
-                    var query = 'SELECT * FROM department';
-                    connection.query(query, function(err, res){
-                    if(err) throw err;
+                    var query = 'SELECT * FROM roles';
+                    connection.query(query, (err, response) => {
+                    if(err) {
+                        console.log(err)
+                    };
                     console.log('your department was added!');
                     menu();
                     })
@@ -259,6 +228,40 @@ function addDepartment() {
             ])
     })
 };
+//============ARRAYS============//
+let deptArray = []
+const selectDept = () => {
+    connection.query(`SELECT * FROM department`, (err, response) => {
+        if(err) throw err;
+        for (let i=0; i < response.length; i++) {
+            deptArray.push(response[i].department_id)
+        }
+    })
+}
+
+
+let roleArray = [];
+const selectRole = () => {
+    connection.query(`SELECT * FROM roles`, (err, response) => {
+        if(err) throw err;
+        for (let i=0; i < response.length; i++) {
+            roleArray.push(response[i].title)
+        }
+    })
+    return roleArray;
+}
+//======manager name array for add emp=====//
+var managerArray = [];
+const selectManager = () => {
+    connection.query(`SELECT * FROM employees WHERE manager_id IS NULL`, (err, response) => {
+        if (err) throw err;
+        for(let i=0; i < response.length; i++) {
+            managerArray.push(response[i].first_name)
+        }
+    })
+    return managerArray;
+}
+
 
 menu();
 //exit app
