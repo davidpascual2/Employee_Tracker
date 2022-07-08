@@ -11,7 +11,7 @@ Once all dependances are installed, source the seed file and then source the sch
 Once complete, start the application by typing in `node index.js` in the terminal and the menu will be prompted to the user.
 
 ## Preview
-[walkthrough Video] (https://www.youtube.com/watch?v=MrFPPB40U6s)
+[walkthrough Video] (https://www.youtu.be/MrFPPB40U6s)
 
 ![](./assets/SS-emp-tracker.png)
 
